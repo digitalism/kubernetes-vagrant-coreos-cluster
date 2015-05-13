@@ -171,7 +171,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         kHost.trigger.before [:up, :provision] do
           info "Setting Kubernetes version #{KUBERNETES_VERSION}"
           sedInplaceArg = OS.mac? ? " ''" : ""
-          system "cp setup.tmpl temp/setup"
+          info ""
+          info "You have to set these environment variables:"
+          info "export FLEETCTL_ENDPOINT=http://172.17.8.101:4001"
+          info "export KUBERNETES_MASTER=http://172.17.8.101:8080"
+          info ""
           system "sed -e 's|__KUBERNETES_VERSION__|#{KUBERNETES_VERSION}|g' -i#{sedInplaceArg} ./temp/setup"
           system "sed -e 's|__MASTER_IP__|#{MASTER_IP}|g' -i#{sedInplaceArg} ./temp/setup"
           system "chmod +x temp/setup"
@@ -196,13 +200,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         end
         
         kHost.trigger.after [:up] do
-          info "Installing kubectl for the kubernetes version we just bootstrapped..."
-          if OS.windows?
-            run_remote "sudo -u core /bin/sh /home/core/kubectlsetup install"
-          else
-            system "./temp/setup install"
-          end
-
           info "Waiting for Kubernetes master to become ready..."
           j, uri, res = 0, URI("http://#{MASTER_IP}:8080"), nil
           loop do
